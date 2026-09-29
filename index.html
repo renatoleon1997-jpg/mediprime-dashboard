@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mediprime Ads Dashboard</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    --bg:#F5F6F4; --surface:#FFFFFF; --surface-2:#ECEFEC; --border:#DCE3DE;
+    --fg:#16211D; --muted:#5C6B64;
+    --accent:#0040AA; --accent-ink:#0040AA; --accent-soft:#E3EAF9;
+    --accent2:#6C4FE0; --accent2-soft:#EDE9FB;
+    --sales:#0F9D77; --sales-soft:#E1F3EC;
+    --good:#1E9E6B; --good-soft:#E4F3EC;
+    --bad:#D14343; --bad-soft:#FBE9E9;
+    --warn:#B7791F; --warn-soft:#FBF1DE;
+    --font-display:'Manrope',system-ui,sans-serif;
+    --font-body:'IBM Plex Sans',system-ui,sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0B1220; --surface:#121B2E; --surface-2:#182338; --border:#263349;
+      --fg:#EAF0FF; --muted:#93A2BE;
+      --accent:#5C8DFF; --accent-ink:#9DB8FF; --accent-soft:#182647;
+      --accent2:#A78BFA; --accent2-soft:#241C42;
+      --sales:#2FC298; --sales-soft:#123227;
+      --good:#3FC28E; --good-soft:#123227;
+      --bad:#F0716A; --bad-soft:#3A1B1B;
+      --warn:#E0A94D; --warn-soft:#332711;
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0B1220; --surface:#121B2E; --surface-2:#182338; --border:#263349;
+    --fg:#EAF0FF; --muted:#93A2BE;
+    --accent:#5C8DFF; --accent-ink:#9DB8FF; --accent-soft:#182647;
+    --accent2:#A78BFA; --accent2-soft:#241C42;
+    --sales:#2FC298; --sales-soft:#123227;
+    --good:#3FC28E; --good-soft:#123227;
+    --bad:#F0716A; --bad-soft:#3A1B1B;
+    --warn:#E0A94D; --warn-soft:#332711;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--fg); font-family:var(--font-body);
+    padding-inline:16px; padding-block:24px; max-width:1120px; margin-inline:auto;
+  }
+  h1,h2,h3{font-family:var(--font-display); margin:0; text-wrap:balance}
+  .mono{font-family:var(--font-mono); font-variant-numeric:tabular-nums}
+  a{color:var(--accent)}
+  header.top{
+    display:flex; flex-wrap:wrap; gap:12px; justify-content:space-between; align-items:flex-end;
+    padding-bottom:20px; margin-bottom:20px; border-bottom:1px solid var(--border);
+  }
+  .eyebrow{font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); font-weight:700}
+  h1{font-size:clamp(22px,4vw,30px); font-weight:800; margin-top:4px}
+  .asof{font-size:13px; color:var(--muted)}
+  .kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-bottom:28px}
+  .kpi{background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:14px; padding:16px}
+  .kpi.sales-accent{border-left-color:var(--sales)}
+  .kpi .label{font-size:12px; color:var(--muted); font-weight:600; letter-spacing:.02em}
+  .kpi .value{font-family:var(--font-mono); font-size:24px; font-weight:600; margin-top:6px}
+  .kpi .sub{font-size:12px; color:var(--muted); margin-top:4px}
+  .panels{display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start}
+  @media (max-width:820px){ .panels{grid-template-columns:1fr} }
+  .panel{background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; min-width:0}
+  .panel-head{display:flex; align-items:center; gap:8px; margin-bottom:14px}
+  .dot{width:9px;height:9px;border-radius:50%}
+  .dot.ads{background:var(--accent)}
+  .dot.ads2{background:var(--accent2)}
+  .dot.sales{background:var(--sales)}
+  .panel h2{font-size:15px; font-weight:700}
+  .panel .desc{font-size:12px; color:var(--muted); margin-top:2px}
+  table{width:100%; border-collapse:collapse; font-size:12.5px}
+  th{text-align:left; font-weight:600; color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.03em; padding:6px 8px; border-bottom:1px solid var(--border)}
+  td{padding:7px 8px; border-bottom:1px solid var(--border); vertical-align:top}
+  td.num{font-family:var(--font-mono); text-align:right; white-space:nowrap}
+  tr:last-child td{border-bottom:none}
+  .tablewrap{overflow-x:auto; border-radius:10px}
+  .bar-track{flex:1; height:6px; background:var(--surface-2); border-radius:4px; overflow:hidden; min-width:40px}
+  .bar-fill{height:100%; background:var(--accent); border-radius:4px}
+  .bar-fill.acct2{background:var(--accent2)}
+  .pill{display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; padding:2px 8px; border-radius:999px}
+  .pill.good{background:var(--good-soft); color:var(--good)}
+  .pill.bad{background:var(--bad-soft); color:var(--bad)}
+  .trend-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px}
+  @media (max-width:420px){ .trend-grid{grid-template-columns:1fr} }
+  .trend-card{border:1px solid var(--border); border-radius:10px; padding:10px}
+  .trend-card .t-name{font-size:12.5px; font-weight:600; margin-bottom:4px}
+  .trend-card .t-metrics{font-size:11px; color:var(--muted); font-family:var(--font-mono)}
+  .section-title{font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin:18px 0 8px}
+  .filterbar{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:12px}
+  .preset-btn{
+    font-family:var(--font-body); font-size:12px; font-weight:600; color:var(--fg);
+    background:var(--surface-2); border:1px solid var(--border); border-radius:999px;
+    padding:6px 12px; cursor:pointer; transition:background .15s, color .15s, border-color .15s;
+  }
+  .preset-btn:hover{border-color:var(--accent)}
+  .preset-btn.active{background:var(--accent); border-color:var(--accent); color:#fff}
+  .daterow{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted)}
+  .daterow input[type=date]{
+    font-family:var(--font-mono); font-size:12px; color:var(--fg); background:var(--surface);
+    border:1px solid var(--border); border-radius:8px; padding:5px 8px;
+  }
+  .mini-stats{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px}
+  @media (max-width:640px){ .mini-stats{grid-template-columns:repeat(2,1fr)} }
+  .mini-stat{background:var(--surface-2); border-radius:10px; padding:10px 12px}
+  .mini-stat.acct1{border-left:3px solid var(--accent)}
+  .mini-stat.acct2{border-left:3px solid var(--accent2)}
+  .mini-stat .m-label{font-size:10.5px; text-transform:uppercase; letter-spacing:.03em; color:var(--muted); font-weight:600}
+  .mini-stat .m-value{font-family:var(--font-mono); font-size:16px; font-weight:600; margin-top:3px}
+  .legend{display:flex; gap:14px; margin-bottom:8px; font-size:11.5px; color:var(--muted)}
+  .legend span{display:inline-flex; align-items:center; gap:5px}
+  .legend .sw{width:9px; height:9px; border-radius:50%}
+  .chartwrap{margin-bottom:14px}
+  .chartwrap svg{width:100%; height:auto; display:block}
+  .acct-tables{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+  @media (max-width:640px){ .acct-tables{grid-template-columns:1fr} }
+  .acct-tables h3{font-size:11.5px; font-weight:600; margin-bottom:6px; display:flex; align-items:center; gap:6px}
+  .note{
+    display:flex; gap:10px; background:var(--warn-soft); border:1px solid var(--border);
+    border-radius:12px; padding:12px 14px; font-size:12.5px; color:var(--fg); margin-top:18px;
+  }
+  .note b{color:var(--warn)}
+  .note-icon{font-family:var(--font-mono); font-weight:700; color:var(--warn); flex-shrink:0}
+  .note.mini{margin-top:0; margin-bottom:14px; padding:8px 12px; font-size:11.5px}
+  .placeholder{
+    border:1px dashed var(--border); border-radius:12px; padding:16px; text-align:center;
+    color:var(--muted); font-size:12.5px; margin-top:18px;
+  }
+  .placeholder b{color:var(--fg)}
+  footer{margin-top:28px; padding-top:16px; border-top:1px solid var(--border); font-size:12px; color:var(--muted); display:flex; flex-wrap:wrap; gap:6px 16px; justify-content:space-between}
+  img{max-width:100%}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div>
+    <div class="eyebrow">Mediprime · Meta Ads &amp; Ventas</div>
+    <h1>Panel de rendimiento</h1>
+  </div>
+  <div class="asof">Datos al <strong>29 sep 2026</strong> · fuente: Meta Ads (cuentas Mediprime) + Drive · "VENTAS MEDIPRIME"</div>
+</header>
+
+<section class="kpis">
+  <div class="kpi">
+    <div class="label">Gasto histórico (2 cuentas)</div>
+    <div class="value">S/ 14,464.77</div>
+    <div class="sub">Acumulado por campaña, todo el historial</div>
+  </div>
+  <div class="kpi">
+    <div class="label">Campañas con gasto</div>
+    <div class="value">30</div>
+    <div class="sub">de 108 campañas creadas en total</div>
+  </div>
+  <div class="kpi">
+    <div class="label">Cuentas activas</div>
+    <div class="value">2</div>
+    <div class="sub">Mediprime Soles · Cliente Final</div>
+  </div>
+  <div class="kpi sales-accent">
+    <div class="label">Anuncios en tendencia positiva</div>
+    <div class="value">2 <span style="font-size:14px; color:var(--muted); font-weight:500">/ 10</span></div>
+    <div class="sub">CTR en alza, cuenta Cliente Final</div>
+  </div>
+</section>
+
+<section class="panels">
+  <div class="panel">
+    <div class="panel-head">
+      <span class="dot ads"></span>
+      <div>
+        <h2>Meta Ads — gasto por fecha</h2>
+        <div class="desc">Filtro real para las 2 cuentas · datos diarios, 29 ago – 27 sep 2026</div>
+      </div>
+    </div>
+
+    <div class="filterbar">
+      <button class="preset-btn" data-preset="7">7 días</button>
+      <button class="preset-btn" data-preset="14">14 días</button>
+      <button class="preset-btn active" data-preset="30">30 días</button>
+      <span class="daterow">
+        <input type="date" id="fromDate" min="2026-08-29" max="2026-09-27" value="2026-08-29">
+        <span>–</span>
+        <input type="date" id="toDate" min="2026-08-29" max="2026-09-27" value="2026-09-27">
+      </span>
+    </div>
+
+    <div class="mini-stats">
+      <div class="mini-stat">
+        <div class="m-label">Total combinado</div>
+        <div class="m-value" id="statTotal">—</div>
+      </div>
+      <div class="mini-stat acct1">
+        <div class="m-label">Mediprime Soles</div>
+        <div class="m-value" id="statSoles">—</div>
+      </div>
+      <div class="mini-stat acct2">
+        <div class="m-label">Cliente Final</div>
+        <div class="m-value" id="statCF">—</div>
+      </div>
+      <div class="mini-stat">
+        <div class="m-label">Vs. periodo anterior</div>
+        <div class="m-value" id="statDelta">—</div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><span class="sw" style="background:var(--accent2)"></span>Mediprime Soles</span>
+      <span><span class="sw" style="background:var(--accent)"></span>Cliente Final</span>
+    </div>
+    <div class="chartwrap"><svg id="chart" viewBox="0 0 640 170" preserveAspectRatio="none" role="img" aria-label="Gasto diario por cuenta"></svg></div>
+
+    <div class="acct-tables">
+      <div>
+        <h3><span class="dot ads2"></span>Mediprime Soles</h3>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Campaña</th><th style="text-align:right">Gasto</th></tr></thead>
+            <tbody id="tableSoles"></tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <h3><span class="dot ads"></span>Cliente Final</h3>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Campaña</th><th style="text-align:right">Gasto</th></tr></thead>
+            <tbody id="tableCF"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Tendencia de anuncios · Cliente Final</div>
+    <div class="trend-grid">
+      <div class="trend-card">
+        <div class="t-name">Dermapen M7 — Imagen 2 <span class="pill good">▲ CTR</span></div>
+        <div class="t-metrics">CTR +165% · CVR +177% · CPM +26%</div>
+      </div>
+      <div class="trend-card">
+        <div class="t-name">Dermapen M7 — Imagen 1 <span class="pill good">▲ CTR</span></div>
+        <div class="t-metrics">CTR +83% · CPCL +13% · CPM +32%</div>
+      </div>
+      <div class="trend-card">
+        <div class="t-name">Paleta — Imagen 2 <span class="pill bad">▼ CTR</span></div>
+        <div class="t-metrics">CTR −67% · CPM +27% · CVR sin cambio</div>
+      </div>
+      <div class="trend-card">
+        <div class="t-name">Tens Recargable — Imagen 2 <span class="pill bad">▼ CTR</span></div>
+        <div class="t-metrics">CTR −65% · CVR −54% · CPCL −49%</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <span class="dot sales"></span>
+      <div>
+        <h2>Ventas — registro Mediprime</h2>
+        <div class="desc">Muestra tomada de la hoja "VENTAS MEDIPRIME" en Drive</div>
+      </div>
+    </div>
+
+    <div class="note mini">Vista de muestra, no el total del periodo — ver nota al final.</div>
+
+    <div class="section-title">Seguimiento semanal (hoja VENTAS SEPTIEMBRE)</div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Producto</th><th style="text-align:right">Ventas</th><th style="text-align:right">N° ventas</th><th style="text-align:right">Anuncios</th></tr></thead>
+        <tbody>
+          <tr><td>Ondas de choque M y P</td><td class="num">S/ 3,000.00</td><td class="num">2</td><td class="num">7</td></tr>
+          <tr><td>Super micro bubble beauty</td><td class="num">S/ 1,908.00</td><td class="num">2</td><td class="num">—</td></tr>
+          <tr><td>Hidra 7 en 1</td><td class="num">S/ 999.00</td><td class="num">1</td><td class="num">—</td></tr>
+          <tr><td>Mag 12 pro</td><td class="num">S/ —</td><td class="num">0</td><td class="num">3</td></tr>
+          <tr><td>Tens 7000</td><td class="num">S/ —</td><td class="num">0</td><td class="num">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="desc" style="margin-top:6px">Semana "31 ago – 6 set". La columna "Gasto publicitario" de esta hoja está vacía — hoy se llena a mano.</div>
+
+    <div class="section-title">Ventas recientes (hoja VENTAS 28 OCT – 29 SET)</div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Fecha</th><th>Producto</th><th style="text-align:right">Total</th></tr></thead>
+        <tbody>
+          <tr><td>15 oct</td><td>Ondas de choque portátil (2)</td><td class="num">S/ 3,400.00</td></tr>
+          <tr><td>13 oct</td><td>Onda de choque de mesa + Tensems</td><td class="num">S/ 3,308.00</td></tr>
+          <tr><td>24 oct</td><td>Lamagneto Pro</td><td class="num">S/ 3,100.00</td></tr>
+          <tr><td>15 oct</td><td>Ondas de choque de mesa</td><td class="num">S/ 2,999.00</td></tr>
+          <tr><td>21 oct</td><td>Lamagneto</td><td class="num">S/ 2,789.00</td></tr>
+          <tr><td>15 oct</td><td>Sonopulse III</td><td class="num">S/ 2,307.00</td></tr>
+          <tr><td>28 oct</td><td>Lescolton</td><td class="num">S/ 578.00</td></tr>
+          <tr><td>21 oct</td><td>Lescolton</td><td class="num">S/ 550.00</td></tr>
+          <tr><td>28 oct</td><td>Paleta ultrasónica (4)</td><td class="num">S/ 480.00</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="desc" style="margin-top:6px">9 de 37 filas visibles en la muestra — no es el total del periodo.</div>
+
+    <div class="placeholder">
+      <b>Catálogo de productos — próximamente</b><br>
+      En cuanto tengamos el inventario completo, cada producto será clicable aquí y mostrará su gasto en ads y sus ventas.
+    </div>
+  </div>
+</section>
+
+<div class="note">
+  <span class="note-icon">!</span>
+  <div>
+    <b>El filtro de fechas ya es real para las 2 cuentas</b> (datos diarios verdaderos de Meta Ads, 29 ago – 27 sep). Las ventas siguen siendo una muestra de Drive, no el archivo completo de 1,900+ filas. El catálogo de productos con clic-para-ver-gasto-y-ventas está pendiente de la lista completa de inventario.
+  </div>
+</div>
+
+<footer>
+  <span>Mediprime · Meta Ads (2 cuentas) + Drive</span>
+  <span>Generado 29 sep 2026</span>
+</footer>
+
+<script>
+(function(){
+  var dataSoles = [
+    {date:"2026-08-29",campaign:"Antares",spend:22.32},{date:"2026-08-29",campaign:"Cav8en1",spend:15.40},
+    {date:"2026-08-29",campaign:"Sonofocus",spend:16.88},{date:"2026-08-29",campaign:"Hooke (interacción)",spend:17.30},
+    {date:"2026-08-29",campaign:"Ecams 15/08",spend:11.20},
+    {date:"2026-08-30",campaign:"Antares",spend:30.33},{date:"2026-08-30",campaign:"Cav8en1",spend:23.57},
+    {date:"2026-08-30",campaign:"Sonofocus",spend:23.75},{date:"2026-08-30",campaign:"Hooke (interacción)",spend:22.82},
+    {date:"2026-08-30",campaign:"Ecams 15/08",spend:23.49},
+    {date:"2026-08-31",campaign:"Antares",spend:29.57},{date:"2026-08-31",campaign:"Cav8en1",spend:22.60},
+    {date:"2026-08-31",campaign:"Sonofocus",spend:19.79},{date:"2026-08-31",campaign:"Hooke (interacción)",spend:24.85},
+    {date:"2026-08-31",campaign:"Ecams 15/08",spend:15.64},{date:"2026-08-31",campaign:"Neurodyn II",spend:8.78},
+    {date:"2026-09-01",campaign:"Antares",spend:26.98},{date:"2026-09-01",campaign:"Cav8en1",spend:19.59},
+    {date:"2026-09-01",campaign:"Sonofocus",spend:25.93},{date:"2026-09-01",campaign:"Hooke (interacción)",spend:22.14},
+    {date:"2026-09-01",campaign:"Ecams 15/08",spend:30.46},{date:"2026-09-01",campaign:"Neurodyn II",spend:33.29},
+    {date:"2026-09-02",campaign:"Antares",spend:26.02},{date:"2026-09-02",campaign:"Cav8en1",spend:21.48},
+    {date:"2026-09-02",campaign:"Sonofocus",spend:21.47},{date:"2026-09-02",campaign:"Hooke (interacción)",spend:19.57},
+    {date:"2026-09-02",campaign:"Ecams 15/08",spend:21.44},{date:"2026-09-02",campaign:"Neurodyn II",spend:24.24},
+    {date:"2026-09-03",campaign:"Antares",spend:25.22},{date:"2026-09-03",campaign:"Cav8en1",spend:18.83},
+    {date:"2026-09-03",campaign:"Sonofocus",spend:19.22},{date:"2026-09-03",campaign:"Hooke (interacción)",spend:5.76},
+    {date:"2026-09-03",campaign:"Ecams 15/08",spend:22.61},{date:"2026-09-03",campaign:"Neurodyn II",spend:27.93},
+    {date:"2026-09-04",campaign:"Antares",spend:15.78},{date:"2026-09-04",campaign:"Cav8en1",spend:18.01},
+    {date:"2026-09-04",campaign:"Sonofocus",spend:16.96},{date:"2026-09-04",campaign:"Ecams 15/08",spend:13.04},
+    {date:"2026-09-04",campaign:"Neurodyn II",spend:21.39},{date:"2026-09-04",campaign:"Hooke",spend:42.80},
+    {date:"2026-09-05",campaign:"Antares",spend:19.77},{date:"2026-09-05",campaign:"Cav8en1",spend:15.73},
+    {date:"2026-09-05",campaign:"Sonofocus",spend:12.80},{date:"2026-09-05",campaign:"Ecams 15/08",spend:11.17},
+    {date:"2026-09-05",campaign:"Neurodyn II",spend:24.11},{date:"2026-09-05",campaign:"Hooke",spend:43.57},
+    {date:"2026-09-06",campaign:"Antares",spend:32.94},{date:"2026-09-06",campaign:"Cav8en1",spend:17.83},
+    {date:"2026-09-06",campaign:"Sonofocus",spend:19.39},{date:"2026-09-06",campaign:"Ecams 15/08",spend:21.05},
+    {date:"2026-09-06",campaign:"Neurodyn II",spend:26.10},{date:"2026-09-06",campaign:"Hooke",spend:58.41},
+    {date:"2026-09-07",campaign:"Antares",spend:27.62},{date:"2026-09-07",campaign:"Cav8en1",spend:27.72},
+    {date:"2026-09-07",campaign:"Sonofocus",spend:27.52},{date:"2026-09-07",campaign:"Ecams 15/08",spend:12.46},
+    {date:"2026-09-07",campaign:"Neurodyn II",spend:25.91},{date:"2026-09-07",campaign:"Hooke",spend:65.85},
+    {date:"2026-09-08",campaign:"Antares",spend:30.89},{date:"2026-09-08",campaign:"Tecarterapia",spend:42.88},
+    {date:"2026-09-08",campaign:"Cav8en1",spend:23.15},{date:"2026-09-08",campaign:"Sonofocus",spend:20.45},
+    {date:"2026-09-08",campaign:"Ecams 15/08",spend:33.52},{date:"2026-09-08",campaign:"Neurodyn II",spend:21.84},
+    {date:"2026-09-08",campaign:"Hooke",spend:49.47},
+    {date:"2026-09-09",campaign:"Antares",spend:28.88},{date:"2026-09-09",campaign:"Tecarterapia",spend:38.23},
+    {date:"2026-09-09",campaign:"Cav8en1",spend:20.85},{date:"2026-09-09",campaign:"Sonofocus",spend:20.15},
+    {date:"2026-09-09",campaign:"Ecams 15/08",spend:26.43},{date:"2026-09-09",campaign:"Neurodyn II",spend:21.72},
+    {date:"2026-09-09",campaign:"Hooke",spend:51.11},
+    {date:"2026-09-10",campaign:"Antares",spend:20.94},{date:"2026-09-10",campaign:"Tecarterapia",spend:37.21},
+    {date:"2026-09-10",campaign:"Cav8en1",spend:19.59},{date:"2026-09-10",campaign:"Sonofocus",spend:22.59},
+    {date:"2026-09-10",campaign:"Ecams 15/08",spend:18.49},{date:"2026-09-10",campaign:"Neurodyn II",spend:17.26},
+    {date:"2026-09-10",campaign:"Hooke",spend:49.27},
+    {date:"2026-09-11",campaign:"Antares",spend:14.36},{date:"2026-09-11",campaign:"Tecarterapia",spend:30.45},
+    {date:"2026-09-11",campaign:"Cav8en1",spend:17.24},{date:"2026-09-11",campaign:"Sonofocus",spend:16.44},
+    {date:"2026-09-11",campaign:"Ecams 15/08",spend:18.22},{date:"2026-09-11",campaign:"Neurodyn II",spend:14.29},
+    {date:"2026-09-11",campaign:"Hooke",spend:39.88},
+    {date:"2026-09-12",campaign:"Antares",spend:18.97},{date:"2026-09-12",campaign:"Tecarterapia",spend:26.04},
+    {date:"2026-09-12",campaign:"Cav8en1",spend:13.61},{date:"2026-09-12",campaign:"Sonofocus",spend:13.42},
+    {date:"2026-09-12",campaign:"Ecams 15/08",spend:8.00},{date:"2026-09-12",campaign:"Neurodyn II",spend:12.67},
+    {date:"2026-09-12",campaign:"Hooke",spend:35.87},
+    {date:"2026-09-13",campaign:"Antares",spend:25.29},{date:"2026-09-13",campaign:"Tecarterapia",spend:22.82},
+    {date:"2026-09-13",campaign:"Cav8en1",spend:18.67},{date:"2026-09-13",campaign:"Sonofocus",spend:18.16},
+    {date:"2026-09-13",campaign:"Ecams 15/08",spend:13.16},{date:"2026-09-13",campaign:"Neurodyn II",spend:20.51},
+    {date:"2026-09-13",campaign:"Hooke",spend:50.72},
+    {date:"2026-09-14",campaign:"Antares",spend:29.39},{date:"2026-09-14",campaign:"Tecarterapia",spend:32.68},
+    {date:"2026-09-14",campaign:"Cav8en1",spend:21.60},{date:"2026-09-14",campaign:"Sonofocus",spend:21.41},
+    {date:"2026-09-14",campaign:"Ecams 15/08",spend:22.20},{date:"2026-09-14",campaign:"Neurodyn II",spend:21.66},
+    {date:"2026-09-14",campaign:"Hooke",spend:66.41},
+    {date:"2026-09-15",campaign:"Antares",spend:31.37},{date:"2026-09-15",campaign:"Tecarterapia",spend:28.69},
+    {date:"2026-09-15",campaign:"Cav8en1",spend:27.13},{date:"2026-09-15",campaign:"Sonofocus",spend:26.27},
+    {date:"2026-09-15",campaign:"Ecams 15/08",spend:31.53},{date:"2026-09-15",campaign:"Neurodyn II",spend:27.46},
+    {date:"2026-09-15",campaign:"Hooke",spend:58.44},
+    {date:"2026-09-16",campaign:"Antares",spend:26.52},{date:"2026-09-16",campaign:"Tecarterapia",spend:26.60},
+    {date:"2026-09-16",campaign:"Cav8en1",spend:22.50},{date:"2026-09-16",campaign:"Sonofocus",spend:19.29},
+    {date:"2026-09-16",campaign:"Ecams 15/08",spend:10.60},{date:"2026-09-16",campaign:"Neurodyn II",spend:21.52},
+    {date:"2026-09-16",campaign:"Hooke",spend:52.13},{date:"2026-09-16",campaign:"Ecams 16/09",spend:9.67},
+    {date:"2026-09-17",campaign:"Antares",spend:22.09},{date:"2026-09-17",campaign:"Tecarterapia",spend:23.12},
+    {date:"2026-09-17",campaign:"Cav8en1",spend:17.69},{date:"2026-09-17",campaign:"Sonofocus",spend:20.17},
+    {date:"2026-09-17",campaign:"Neurodyn II",spend:15.48},{date:"2026-09-17",campaign:"Hooke",spend:45.96},
+    {date:"2026-09-17",campaign:"Ecams 16/09",spend:21.10},
+    {date:"2026-09-18",campaign:"Antares",spend:14.63},{date:"2026-09-18",campaign:"Tecarterapia",spend:17.84},
+    {date:"2026-09-18",campaign:"Cav8en1",spend:16.95},{date:"2026-09-18",campaign:"Sonofocus",spend:16.65},
+    {date:"2026-09-18",campaign:"Neurodyn II",spend:13.38},{date:"2026-09-18",campaign:"Hooke",spend:30.78},
+    {date:"2026-09-18",campaign:"Ecams 16/09",spend:17.80},
+    {date:"2026-09-19",campaign:"Antares",spend:25.66},{date:"2026-09-19",campaign:"Tecarterapia",spend:23.08},
+    {date:"2026-09-19",campaign:"Cav8en1",spend:15.27},{date:"2026-09-19",campaign:"Sonofocus",spend:17.73},
+    {date:"2026-09-19",campaign:"Neurodyn II",spend:19.92},{date:"2026-09-19",campaign:"Hooke",spend:45.47},
+    {date:"2026-09-19",campaign:"Ecams 16/09",spend:21.42},
+    {date:"2026-09-20",campaign:"Antares",spend:32.43},{date:"2026-09-20",campaign:"Tecarterapia",spend:28.62},
+    {date:"2026-09-20",campaign:"Cav8en1",spend:17.12},{date:"2026-09-20",campaign:"Sonofocus",spend:21.74},
+    {date:"2026-09-20",campaign:"Neurodyn II",spend:23.10},{date:"2026-09-20",campaign:"Hooke",spend:56.06},
+    {date:"2026-09-20",campaign:"Ecams 16/09",spend:28.49},
+    {date:"2026-09-21",campaign:"Antares",spend:25.85},{date:"2026-09-21",campaign:"Tecarterapia",spend:27.64},
+    {date:"2026-09-21",campaign:"Cav8en1",spend:26.62},{date:"2026-09-21",campaign:"Sonofocus",spend:25.47},
+    {date:"2026-09-21",campaign:"Neurodyn II",spend:23.68},{date:"2026-09-21",campaign:"Hooke",spend:58.45},
+    {date:"2026-09-21",campaign:"Ecams 16/09",spend:20.06},
+    {date:"2026-09-22",campaign:"Antares",spend:30.55},{date:"2026-09-22",campaign:"Tecarterapia",spend:6.07},
+    {date:"2026-09-22",campaign:"Cav8en1",spend:24.01},{date:"2026-09-22",campaign:"Sonofocus",spend:23.00},
+    {date:"2026-09-22",campaign:"Magnet-12 Pro",spend:25.02},{date:"2026-09-22",campaign:"Neurodyn II",spend:20.77},
+    {date:"2026-09-22",campaign:"Hooke",spend:58.39},{date:"2026-09-22",campaign:"Ecams 16/09",spend:23.86},
+    {date:"2026-09-23",campaign:"Antares",spend:25.35},{date:"2026-09-23",campaign:"Cav8en1",spend:18.96},
+    {date:"2026-09-23",campaign:"Sonofocus",spend:19.75},{date:"2026-09-23",campaign:"Magnet-12 Pro",spend:29.18},
+    {date:"2026-09-23",campaign:"Neurodyn II",spend:18.63},{date:"2026-09-23",campaign:"Hooke",spend:49.79},
+    {date:"2026-09-23",campaign:"Ecams 16/09",spend:19.30},
+    {date:"2026-09-24",campaign:"Antares",spend:22.04},{date:"2026-09-24",campaign:"Cav8en1",spend:21.13},
+    {date:"2026-09-24",campaign:"Sonofocus",spend:17.49},{date:"2026-09-24",campaign:"Magnet-12 Pro",spend:25.51},
+    {date:"2026-09-24",campaign:"Neurodyn II",spend:20.83},{date:"2026-09-24",campaign:"Hooke",spend:24.59},
+    {date:"2026-09-24",campaign:"Ecams 16/09",spend:18.78},
+    {date:"2026-09-25",campaign:"Antares",spend:21.27},{date:"2026-09-25",campaign:"Cav8en1",spend:17.81},
+    {date:"2026-09-25",campaign:"Sonofocus",spend:18.76},{date:"2026-09-25",campaign:"Magnet-12 Pro",spend:30.33},
+    {date:"2026-09-25",campaign:"Neurodyn II",spend:18.88},{date:"2026-09-25",campaign:"Hooke",spend:50.25},
+    {date:"2026-09-25",campaign:"Ecams 16/09",spend:15.35},
+    {date:"2026-09-26",campaign:"Antares",spend:17.14},{date:"2026-09-26",campaign:"Cav8en1",spend:13.79},
+    {date:"2026-09-26",campaign:"Sonofocus",spend:13.65},{date:"2026-09-26",campaign:"Magnet-12 Pro",spend:29.21},
+    {date:"2026-09-26",campaign:"Neurodyn II",spend:13.72},{date:"2026-09-26",campaign:"Hooke",spend:52.32},
+    {date:"2026-09-26",campaign:"Ecams 16/09",spend:13.61},
+    {date:"2026-09-27",campaign:"Antares",spend:25.34},{date:"2026-09-27",campaign:"Cav8en1",spend:22.33},
+    {date:"2026-09-27",campaign:"Sonofocus",spend:20.31},{date:"2026-09-27",campaign:"Magnet-12 Pro",spend:22.09},
+    {date:"2026-09-27",campaign:"Neurodyn II",spend:25.18},{date:"2026-09-27",campaign:"Hooke",spend:50.08},
+    {date:"2026-09-27",campaign:"Ecams 16/09",spend:22.93}
+  ];
+
+  var dataCF = [
+    {date:"2026-08-29",campaign:"Hifu_Paleta_Hydra 24Jun",spend:34.54},{date:"2026-08-29",campaign:"Dermapen_Cliente Final",spend:14.35},
+    {date:"2026-08-29",campaign:"Lescolton, Hifu, DermM7, Paleta",spend:17.20},{date:"2026-08-29",campaign:"Tens_Recargable",spend:12.37},
+    {date:"2026-08-30",campaign:"Hifu_Paleta_Hydra 24Jun",spend:38.14},{date:"2026-08-30",campaign:"Dermapen_Cliente Final",spend:19.17},
+    {date:"2026-08-30",campaign:"Lescolton, Hifu, DermM7, Paleta",spend:25.96},{date:"2026-08-30",campaign:"Tens_Recargable",spend:17.64},
+    {date:"2026-08-31",campaign:"Hifu_Paleta_Hydra 24Jun",spend:28.67},{date:"2026-08-31",campaign:"Dermapen_Cliente Final",spend:16.66},
+    {date:"2026-08-31",campaign:"Lescolton, Hifu, DermM7, Paleta",spend:16.97},{date:"2026-08-31",campaign:"Tens_Recargable",spend:18.55},
+    {date:"2026-09-01",campaign:"Dermapen_Cliente Final",spend:15.33},{date:"2026-09-01",campaign:"Tens_Recargable",spend:15.33},
+    {date:"2026-09-02",campaign:"Dermapen_Cliente Final",spend:16.13},{date:"2026-09-02",campaign:"Tens_Recargable",spend:14.86},
+    {date:"2026-09-03",campaign:"Dermapen_Cliente Final",spend:15.47},{date:"2026-09-03",campaign:"Tens_Recargable",spend:14.33},
+    {date:"2026-09-04",campaign:"Dermapen_Cliente Final",spend:10.55},{date:"2026-09-04",campaign:"Tens_Recargable",spend:13.29},
+    {date:"2026-09-05",campaign:"Dermapen_Cliente Final",spend:11.59},{date:"2026-09-05",campaign:"Tens_Recargable",spend:10.94},
+    {date:"2026-09-06",campaign:"Dermapen_Cliente Final",spend:19.03},{date:"2026-09-06",campaign:"Tens_Recargable",spend:18.10},
+    {date:"2026-09-07",campaign:"Dermapen_Cliente Final",spend:15.99},{date:"2026-09-07",campaign:"Tens_Recargable",spend:19.13},
+    {date:"2026-09-08",campaign:"Hifu_Paleta_Hydra 24Jun",spend:45.19},{date:"2026-09-08",campaign:"Dermapen_Cliente Final",spend:15.49},
+    {date:"2026-09-08",campaign:"Lescolton, Hifu, DermM7, Paleta",spend:30.99},{date:"2026-09-08",campaign:"Tens_Recargable",spend:15.22},
+    {date:"2026-09-09",campaign:"Hifu_Paleta_Hydra 24Jun",spend:47.98},{date:"2026-09-09",campaign:"Dermapen_Cliente Final",spend:16.55},
+    {date:"2026-09-09",campaign:"Lescolton, Hifu, DermM7, Paleta",spend:31.21},{date:"2026-09-09",campaign:"Tens_Recargable",spend:17.14},
+    {date:"2026-09-10",campaign:"Hifu_Paleta_Hydra 24Jun",spend:39.90},{date:"2026-09-10",campaign:"Dermapen_Cliente Final",spend:14.13},
+    {date:"2026-09-10",campaign:"Lescolton, Hifu, DermM7, Paleta",spend:28.21},{date:"2026-09-10",campaign:"Tens_Recargable",spend:13.04},
+    {date:"2026-09-11",campaign:"Hifu_Paleta_Hydra 24Jun",spend:37.89},{date:"2026-09-11",campaign:"Dermapen_Cliente Final",spend:12.87},
+    {date:"2026-09-11",campaign:"Lescolton, Hifu, DermM7, Paleta",spend:26.04},{date:"2026-09-11",campaign:"Tens_Recargable",spend:12.07},
+    {date:"2026-09-12",campaign:"Hifu_Paleta_Hydra 24Jun",spend:38.36},{date:"2026-09-12",campaign:"Dermapen_Cliente Final",spend:10.88},
+    {date:"2026-09-12",campaign:"Lescolton, Hifu, DermM7, Paleta",spend:23.54},{date:"2026-09-12",campaign:"Tens_Recargable",spend:10.15},
+    {date:"2026-09-13",campaign:"Hifu_Paleta_Hydra 24Jun",spend:33.30},{date:"2026-09-13",campaign:"Dermapen_Cliente Final",spend:15.37},
+    {date:"2026-09-13",campaign:"Lescolton, Hifu, DermM7, Paleta",spend:20.23},{date:"2026-09-13",campaign:"Tens_Recargable",spend:15.42},
+    {date:"2026-09-14",campaign:"Hifu_Paleta_Hydra 24Jun",spend:30.57},{date:"2026-09-14",campaign:"Dermapen_Cliente Final",spend:16.73},
+    {date:"2026-09-14",campaign:"Lescolton, Hifu, DermM7, Paleta",spend:23.59},{date:"2026-09-14",campaign:"Tens_Recargable",spend:20.57},
+    {date:"2026-09-15",campaign:"Hifu_Paleta_Hydra 24Jun",spend:11.59},{date:"2026-09-15",campaign:"Dermapen_Cliente Final",spend:3.51},
+    {date:"2026-09-15",campaign:"Lescolton, Hifu, DermM7, Paleta",spend:1.51},{date:"2026-09-15",campaign:"Tens_Recargable",spend:17.59},
+    {date:"2026-09-16",campaign:"Lescolton, Hifu, DermM7, Paleta",spend:10.86},{date:"2026-09-16",campaign:"Tens_Recargable",spend:16.66},
+    {date:"2026-09-17",campaign:"Lescolton, Hifu, DermM7, Paleta",spend:31.79},{date:"2026-09-17",campaign:"Tens_Recargable",spend:11.97},
+    {date:"2026-09-18",campaign:"Lescolton, Hifu, DermM7, Paleta",spend:20.56},{date:"2026-09-18",campaign:"Tens_Recargable",spend:11.76},
+    {date:"2026-09-19",campaign:"Lescolton, Hifu, DermM7, Paleta",spend:31.26},{date:"2026-09-19",campaign:"Tens_Recargable",spend:10.98},
+    {date:"2026-09-20",campaign:"Lescolton, Hifu, DermM7, Paleta",spend:21.97},{date:"2026-09-20",campaign:"Tens_Recargable",spend:16.71},
+    {date:"2026-09-21",campaign:"Lescolton, Hifu, DermM7, Paleta",spend:24.06},{date:"2026-09-21",campaign:"Tens_Recargable",spend:18.64},
+    {date:"2026-09-22",campaign:"Lescolton, Hifu, DermM7, Paleta",spend:26.41},{date:"2026-09-22",campaign:"Tens_Recargable",spend:17.39},
+    {date:"2026-09-23",campaign:"Lescolton, Hifu, DermM7, Paleta",spend:18.67},{date:"2026-09-23",campaign:"Tens_Recargable",spend:12.70},
+    {date:"2026-09-24",campaign:"Lescolton, Hifu, DermM7, Paleta",spend:22.07},{date:"2026-09-24",campaign:"Tens_Recargable",spend:13.61},
+    {date:"2026-09-25",campaign:"Lescolton, Hifu, DermM7, Paleta",spend:12.48},{date:"2026-09-25",campaign:"Tens_Recargable",spend:12.51},
+    {date:"2026-09-26",campaign:"Lescolton, Hifu, DermM7, Paleta",spend:14.06},{date:"2026-09-26",campaign:"Tens_Recargable",spend:13.30},
+    {date:"2026-09-27",campaign:"Lescolton, Hifu, DermM7, Paleta",spend:24.82},{date:"2026-09-27",campaign:"Tens_Recargable",spend:17.78}
+  ];
+
+  var MIN_DATE = "2026-08-29", MAX_DATE = "2026-09-27";
+  var fromInput = document.getElementById('fromDate');
+  var toInput = document.getElementById('toDate');
+  var statTotal = document.getElementById('statTotal');
+  var statSoles = document.getElementById('statSoles');
+  var statCF = document.getElementById('statCF');
+  var statDelta = document.getElementById('statDelta');
+  var tableSoles = document.getElementById('tableSoles');
+  var tableCF = document.getElementById('tableCF');
+  var chartSvg = document.getElementById('chart');
+  var presetBtns = Array.prototype.slice.call(document.querySelectorAll('.preset-btn'));
+
+  function fmtPEN(n){
+    return 'S/ ' + n.toLocaleString('es-PE', {minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+  function addDays(dateStr, delta){
+    var d = new Date(dateStr + 'T00:00:00Z');
+    d.setUTCDate(d.getUTCDate() + delta);
+    return d.toISOString().slice(0,10);
+  }
+  function dayCount(from, to){
+    var a = new Date(from + 'T00:00:00Z'), b = new Date(to + 'T00:00:00Z');
+    return Math.round((b - a) / 86400000) + 1;
+  }
+  function fmtShort(dateStr){
+    var d = new Date(dateStr + 'T00:00:00Z');
+    return d.toLocaleDateString('es-PE', {day:'numeric', month:'short', timeZone:'UTC'});
+  }
+  function rowsInRange(data, from, to){
+    return data.filter(function(r){ return r.date >= from && r.date <= to; });
+  }
+  function aggregateByDate(rows){
+    var map = {};
+    rows.forEach(function(r){ map[r.date] = (map[r.date] || 0) + r.spend; });
+    return map;
+  }
+  function aggregateByCampaign(rows){
+    var map = {};
+    rows.forEach(function(r){ map[r.campaign] = (map[r.campaign] || 0) + r.spend; });
+    return Object.keys(map).map(function(c){ return {campaign:c, spend: map[c]}; })
+      .sort(function(a,b){ return b.spend - a.spend; });
+  }
+  function renderChart(datesArr, bySoles, byCF){
+    var W = 640, H = 170, padL = 46, padR = 12, padT = 16, padB = 26;
+    var innerW = W - padL - padR, innerH = H - padT - padB;
+    var n = datesArr.length;
+    if(n === 0){
+      chartSvg.innerHTML = '<text x="'+W/2+'" y="'+H/2+'" text-anchor="middle" fill="var(--muted)" font-size="12" font-family="var(--font-body)">Sin datos en el rango</text>';
+      return;
+    }
+    var allVals = datesArr.map(function(d){ return bySoles[d]||0; }).concat(datesArr.map(function(d){ return byCF[d]||0; }));
+    var maxY = Math.max.apply(null, allVals) * 1.2;
+    if(maxY <= 0) maxY = 1;
+    function xAt(i){ return padL + (n === 1 ? innerW/2 : i * (innerW / (n - 1))); }
+    function yAt(v){ return padT + innerH - (v / maxY) * innerH; }
+    var baseline = padT + innerH;
+    function buildLine(getVal, color){
+      var pts = datesArr.map(function(d,i){ return xAt(i) + ',' + yAt(getVal(d)); }).join(' L ');
+      var svg = '<path d="M ' + pts + '" fill="none" stroke="'+color+'" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
+      if(n <= 10){
+        datesArr.forEach(function(d,i){
+          svg += '<circle cx="'+xAt(i)+'" cy="'+yAt(getVal(d))+'" r="2.4" fill="'+color+'"/>';
+        });
+      } else {
+        var last = n - 1;
+        svg += '<circle cx="'+xAt(last)+'" cy="'+yAt(getVal(datesArr[last]))+'" r="3" fill="'+color+'"/>';
+      }
+      return svg;
+    }
+    var svg = '';
+    svg += '<line x1="'+padL+'" y1="'+baseline+'" x2="'+(W-padR)+'" y2="'+baseline+'" stroke="var(--border)" stroke-width="1"/>';
+    svg += '<line x1="'+padL+'" y1="'+padT+'" x2="'+(W-padR)+'" y2="'+padT+'" stroke="var(--border)" stroke-width="1" stroke-dasharray="3,3"/>';
+    svg += '<text x="'+(padL-6)+'" y="'+(padT+4)+'" text-anchor="end" font-size="10" font-family="var(--font-mono)" fill="var(--muted)">'+fmtPEN(maxY/1.2).replace('S/ ','')+'</text>';
+    svg += '<text x="'+(padL-6)+'" y="'+(baseline+3)+'" text-anchor="end" font-size="10" font-family="var(--font-mono)" fill="var(--muted)">0</text>';
+    svg += buildLine(function(d){ return bySoles[d]||0; }, 'var(--accent2)');
+    svg += buildLine(function(d){ return byCF[d]||0; }, 'var(--accent)');
+    svg += '<text x="'+xAt(0)+'" y="'+(H-6)+'" text-anchor="start" font-size="10" font-family="var(--font-mono)" fill="var(--muted)">'+fmtShort(datesArr[0])+'</text>';
+    svg += '<text x="'+xAt(n-1)+'" y="'+(H-6)+'" text-anchor="end" font-size="10" font-family="var(--font-mono)" fill="var(--muted)">'+fmtShort(datesArr[n-1])+'</text>';
+    chartSvg.innerHTML = svg;
+  }
+  function renderCampaignTable(tbody, byCampaign, barClass){
+    if(byCampaign.length === 0){
+      tbody.innerHTML = '<tr><td colspan="2" style="color:var(--muted)">Sin gasto en el rango</td></tr>';
+      return;
+    }
+    var max = byCampaign[0].spend || 1;
+    tbody.innerHTML = byCampaign.map(function(c){
+      var pct = Math.max(4, Math.round((c.spend / max) * 100));
+      return '<tr><td>'+c.campaign+'<div class="bar-track" style="margin-top:4px"><div class="bar-fill '+barClass+'" style="width:'+pct+'%"></div></div></td><td class="num">'+fmtPEN(c.spend)+'</td></tr>';
+    }).join('');
+  }
+  function combinedTotal(data, from, to){
+    return rowsInRange(data, from, to).reduce(function(s,r){ return s + r.spend; }, 0);
+  }
+  function renderAll(){
+    var from = fromInput.value, to = toInput.value;
+    if(from > to){ var t = from; from = to; to = t; fromInput.value = from; toInput.value = to; }
+    var rowsS = rowsInRange(dataSoles, from, to);
+    var rowsC = rowsInRange(dataCF, from, to);
+    var totalS = rowsS.reduce(function(s,r){ return s + r.spend; }, 0);
+    var totalC = rowsC.reduce(function(s,r){ return s + r.spend; }, 0);
+    statTotal.textContent = fmtPEN(totalS + totalC);
+    statSoles.textContent = fmtPEN(totalS);
+    statCF.textContent = fmtPEN(totalC);
+    var n = dayCount(from, to);
+    var prevTo = addDays(from, -1);
+    var prevFrom = addDays(prevTo, -(n - 1));
+    var prevTotal = combinedTotal(dataSoles, prevFrom, prevTo) + combinedTotal(dataCF, prevFrom, prevTo);
+    if(prevFrom < MIN_DATE || prevTotal === 0){
+      statDelta.textContent = 'Sin datos previos';
+      statDelta.style.color = 'var(--muted)';
+    } else {
+      var curTotal = totalS + totalC;
+      var delta = ((curTotal - prevTotal) / prevTotal) * 100;
+      var arrow = delta >= 0 ? '▲' : '▼';
+      statDelta.textContent = arrow + ' ' + Math.abs(delta).toFixed(1) + '%';
+      statDelta.style.color = 'var(--accent-ink)';
+    }
+    var dateSet = {};
+    rowsS.forEach(function(r){ dateSet[r.date] = true; });
+    rowsC.forEach(function(r){ dateSet[r.date] = true; });
+    var datesArr = Object.keys(dateSet).sort();
+    renderChart(datesArr, aggregateByDate(rowsS), aggregateByDate(rowsC));
+    renderCampaignTable(tableSoles, aggregateByCampaign(rowsS), 'acct2');
+    renderCampaignTable(tableCF, aggregateByCampaign(rowsC), '');
+    presetBtns.forEach(function(btn){
+      var d = parseInt(btn.dataset.preset, 10);
+      var expectedFrom = addDays(MAX_DATE, -(d - 1));
+      btn.classList.toggle('active', from === expectedFrom && to === MAX_DATE);
+    });
+  }
+  presetBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var d = parseInt(btn.dataset.preset, 10);
+      toInput.value = MAX_DATE;
+      fromInput.value = addDays(MAX_DATE, -(d - 1));
+      renderAll();
+    });
+  });
+  fromInput.addEventListener('change', renderAll);
+  toInput.addEventListener('change', renderAll);
+  renderAll();
+})();
+</script>
+</body>
+</html>

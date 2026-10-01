@@ -210,7 +210,7 @@ footer{padding:28px clamp(20px,5vw,64px);font-size:13px;color:var(--muted);text-
    tablas (ver README). Completa SUPABASE_URL para leer datos en vivo.
    ========================================================= */
 const CONFIG = {
-  SUPABASE_URL: "",   // ej: https://xxxxxxxx.supabase.co
+  SUPABASE_URL: "https://pzmldthbfhbkorfehoih.supabase.co",
   SUPABASE_KEY: "sb_publishable_Gdpr6ROLF_rAik5j1VkI9w_wzAkqr9V",
   TABLA_VENTAS: "ventas",
   TABLA_INVERSION: "inversion_diaria",
@@ -234,7 +234,7 @@ async function loadData(){
     const [v,i,c] = await Promise.all([
       sb.from(CONFIG.TABLA_VENTAS).select("fecha,producto,cantidad,valor").gte("fecha",CONFIG.DESDE).lte("fecha",CONFIG.HASTA).order("fecha"),
       sb.from(CONFIG.TABLA_INVERSION).select("fecha,cuenta,inversion").gte("fecha",CONFIG.DESDE).lte("fecha",CONFIG.HASTA),
-      sb.from(CONFIG.TABLA_CAMPANAS).select("campana,cuenta,inversion,resultados,tipo_resultado")
+      sb.from(CONFIG.TABLA_CAMPANAS).select("campana,cuenta,inversion,resultados,tipo_resultado").eq("periodo_desde",CONFIG.DESDE)
     ]);
     if(v.error||i.error||c.error) throw (v.error||i.error||c.error);
     if(!v.data.length) throw new Error("La tabla de ventas no tiene filas en el rango");

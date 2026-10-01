@@ -51,7 +51,7 @@ Busca el bloque `CONFIG` al final del archivo y completa la URL del proyecto (Su
 
 ```js
 const CONFIG = {
-  SUPABASE_URL: "https://xxxxxxxx.supabase.co",
+  SUPABASE_URL: "https://pzmldthbfhbkorfehoih.supabase.co",
   SUPABASE_KEY: "sb_publishable_Gdpr6ROLF_rAik5j1VkI9w_wzAkqr9V",
   ...
 };
@@ -87,7 +87,9 @@ create table public.campanas (
   cuenta text not null,
   inversion numeric(12,2) not null,
   resultados int not null default 0,
-  tipo_resultado text not null default 'conversaciones'  -- 'conversaciones' | 'leads'
+  tipo_resultado text not null default 'conversaciones', -- 'conversaciones' | 'leads'
+  periodo_desde date,
+  periodo_hasta date
 );
 ```
 
